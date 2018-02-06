@@ -2,9 +2,12 @@
 
 # @Author : Mouhchadi Bakali Tahiri
 # @Date : 2018-02-06
+# @Description : The program should run once per minute using cron. When run, it should discover any CSV
+# files in the “uploaded” directory, parse the rows in the file, insert their contents into a MySQL
+# database, and then move each CSV file to the “processed” directory.
 
 # Some stuff could be refactored , like generate a config file to read all configuation
- 
+
 class Process
 {
     public  $new_registros = array();
@@ -37,7 +40,7 @@ class Process
     {
         
         $directorio = opendir("uploaded"); //current route
-        while ($archivo = readdir($directorio))  
+        while ($archivo = readdir($directorio))
         {
             if (!is_dir($archivo)) {
                 
@@ -49,9 +52,9 @@ class Process
                     
                     print "processing file : ".$this->file;
                     print "<br>";
-
+                    
                     //calling this function to set delimiters
-                    $this->replaceDelimiters("uploaded/".$this->file);                    
+                    $this->replaceDelimiters("uploaded/".$this->file);
                     
                     $nombres_campos = fgetcsv($fichero, 0);
                     
@@ -63,6 +66,14 @@ class Process
                         $contador++;
                     }
                     fclose($fichero);
+                    
+                    try{
+                        copy("uploaded/$this->file", "completed/$this->file") ;
+                       
+                    }  catch (Exception $e){
+
+                    }
+                    
                     
                     $this->num_registros = count($registros);
                     
@@ -77,30 +88,39 @@ class Process
                         $contador++;
                     }//end external foreach
                 }//end if statment
-
+                
                 $this->validateType();
                 $this->updateDb();
-
+                
+                
+                 
+                
+                
+                
+ 
+                
+                
+                
             }//end if statment
-        }// end while        
+        }// end while
         
     }//end method
     
     private function validateType()
     {
-
+        
         # $fila means row
         # $columna means column
         
         for ($fila = 0; $fila < $this->num_registros - 1; $fila++) {
             
             for ($columna = 0; $columna < $this->num_campos; $columna++) {
-
+                
                 // this could be refactored using switch statement o moved to functions
                 
                 if ($this->fields_name[$columna] == 'eventDatetime' && $this->validateDate($this->new_registros[$fila][$this->fields_name[$columna]])) {
-                        $date = strtotime($this->new_registros[$fila][$this->fields_name[$columna]]);
-                        $this->new_registros[$fila][$this->fields_name[$columna]] = date('Y-m-d H:i:s', $date);         
+                    $date = strtotime($this->new_registros[$fila][$this->fields_name[$columna]]);
+                    $this->new_registros[$fila][$this->fields_name[$columna]] = date('Y-m-d H:i:s', $date);
                 }//end if statment
                 
                 if ($this->fields_name[$columna] == 'eventAction' && strlen($this->new_registros[$fila][$this->fields_name[$columna]]) > 20) {
@@ -113,7 +133,7 @@ class Process
                 
                 if ($this->fields_name[$columna] == 'callRef') {
                     $this->new_registros[$fila][$this->fields_name[$columna]] = (int) $this->new_registros[$fila][$this->fields_name[$columna]];
-                }//end if statment             
+                }//end if statment
                 
                 if ($this->fields_name[$columna] == 'eventValue' && !isset($this->new_registros[$fila][$this->fields_name[$columna]])) {
                     $this->new_registros[$fila]['eventValue'] = 0.0;
@@ -138,8 +158,8 @@ class Process
         //fetch fields name database using PDO class
         $q = $this->conn->prepare("DESCRIBE clients");
         $q->execute();
-        $table_fields = $q->fetchAll(PDO::FETCH_COLUMN); 
-
+        $table_fields = $q->fetchAll(PDO::FETCH_COLUMN);
+        
         //this could be refactored using method bind to avoid injection
         foreach ($this->new_registros as $k) {
             $cadena_campos = implode(",",  $table_fields);
@@ -153,30 +173,30 @@ class Process
     }//end method
     
     
-    //helpers function to validate date    
+    //helpers function to validate date
     private function validTime($time, $format = 'H:i:s')
     {
         $d = DateTime::createFromFormat("Y-m-d $format", "2017-12-01 $time");
         return $d && $d->format($format) == $time;
     }//end method
-
-
+    
+    
     private function validateDate($date, $format = 'Y-m-d H:i:s')
     {
         $d = DateTime::createFromFormat($format, $date);
         return $d && $d->format($format) == $date;
     }
-
-    //helper to force delimitir en file    
+    
+    //helper to force delimitir en file
     private function replaceDelimiters($file)
     {
         // Delimiters to be replaced: pipe, comma, semicolon, caret, tabs
         $delimiters = array('|', ';', '^', "\t");
-        $delimiter = ',';        
+        $delimiter = ',';
         $str = file_get_contents($file);
         $str = str_replace($delimiters, $delimiter, $str);
         file_put_contents($file, $str);
-    }      
+    }
     
 }//end class
 
