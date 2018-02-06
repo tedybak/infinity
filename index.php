@@ -32,6 +32,7 @@ class Process
     }// end method construct
     
     
+    // Open file from uploaded directory and process
     function openFile()
     {
         
@@ -75,15 +76,17 @@ class Process
                         }//end internal foreach
                         $contador++;
                     }//end external foreach
-                }
+                }//end if statment
+
                 $this->validateType();
                 $this->updateDb();
+
             }//end if statment
         }// end while        
         
     }//end method
     
-    function validateType()
+    private function validateType()
     {
 
         # $fila means row
@@ -130,7 +133,7 @@ class Process
     }//end method
     
     
-    function updateDb()
+    private function updateDb()
     {
         //fetch fields name database using PDO class
         $q = $this->conn->prepare("DESCRIBE clients");
@@ -150,23 +153,21 @@ class Process
     }//end method
     
     
-    //helpers function to validate date
-    
-    function validTime($time, $format = 'H:i:s')
+    //helpers function to validate date    
+    private function validTime($time, $format = 'H:i:s')
     {
         $d = DateTime::createFromFormat("Y-m-d $format", "2017-12-01 $time");
         return $d && $d->format($format) == $time;
     }//end method
 
 
-    function validateDate($date, $format = 'Y-m-d H:i:s')
+    private function validateDate($date, $format = 'Y-m-d H:i:s')
     {
         $d = DateTime::createFromFormat($format, $date);
         return $d && $d->format($format) == $date;
     }
 
-    //helper to forece delimitir en file
-    
+    //helper to force delimitir en file    
     private function replaceDelimiters($file)
     {
         // Delimiters to be replaced: pipe, comma, semicolon, caret, tabs
