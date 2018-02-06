@@ -2,6 +2,9 @@
 
 # @Author : Mouhchadi Bakali Tahiri
 # @Date : 2018-02-06
+# @Description : The program should run once per minute using cron. When run, it should discover any CSV
+# files in the “uploaded” directory, parse the rows in the file, insert their contents into a MySQL
+# database, and then move each CSV file to the “processed” directory.
 
 # Some stuff could be refactored , like generate a config file to read all configuation
  
